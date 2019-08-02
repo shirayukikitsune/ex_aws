@@ -1,15 +1,18 @@
 defmodule Kitsune.Aws.Signature do
+  def sign(key, to_sign), do:
+    :crypto.hmac :sha256, key, to_sign
+
   def get_date_key(secret_access_key, date), do:
-    :crypto.hmac(:sha256, "AWS4" <> secret_access_key, Date.to_iso8601(date, :basic))
+    sign "AWS4" <> secret_access_key, Date.to_iso8601(date, :basic)
 
   def get_region_key(date_key, region), do:
-    :crypto.hmac(:sha256, date_key, region)
+    sign date_key, region
 
   def get_service_key(region_key, service), do:
-    :crypto.hmac(:sha256, region_key, service)
+    sign region_key, service
 
   def get_signing_key(service_key), do:
-    :crypto.hmac(:sha256, service_key, "aws4_request")
+    sign service_key, "aws4_request"
 
   def get_signing_key(secret_access_key, region, service, date) do
     get_date_key(secret_access_key, date)

@@ -22,7 +22,8 @@ defmodule ExAws.MixProject do
   defp deps do
     [
       {:castore, "~> 0.1.0"},
-      {:mint, "~> 0.2.0"}
+      {:mint, "~> 0.2.0"},
+      {:poison, "~> 4.0.1"}
     ]
   end
 end

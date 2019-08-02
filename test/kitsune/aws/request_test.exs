@@ -1,14 +1,24 @@
 defmodule Kitsune.Aws.RequestTest do
-  use ExUnit.Case, async: true
-  alias Kitsune.Aws.Request
+  use ExUnit.Case
+  doctest Kitsune.Aws.Request
+  alias Kitsune.Aws.Request, as: R
 
-  setup %{test: test} do
-    request = start_supervised!(Request)
-    %{request: request}
+  setup do
+    start_supervised!({Task.Supervisor, name: Kitsune.RequestSupervisor})
+    :ok
   end
 
-  test "works", %{request: request} do
-    r = GenServer.call(request, {:get, "https://www.google.com/", []})
-    IO.inspect(r)
+  test "Get SQS Url" do
+    url = "https://sqs.sa-east-1.amazonaws.com/?Action=GetQueueUrl&QueueName=some-queue.fifo"
+
+    data = R.get(url, "sqs", [{"accept", "application/json"}])
+           |> Task.await
+           |> Enum.find(fn x -> elem(x, 0) == :data end)
+           |> elem(2)
+           |> Poison.decode!
+
+    x = data["GetQueueUrlResponse"]["GetQueueUrlResult"]["QueueUrl"]
+    assert x != nil
+    assert x != ""
   end
 end

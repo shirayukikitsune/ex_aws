@@ -30,8 +30,8 @@ defmodule Kitsune.Aws.CanonicalTest do
   end
 
   test "should generate valid payload hashes" do
-    assert Canonical.get_payload_hash("") == "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    assert Canonical.get_payload_hash("Welcome to Amazon S3.") == "44ce7dd67c959e0d3524ffac1771dfbba87d2b6b4b4e99e42034a8b803f8b072"
+    assert Canonical.get_hash("") == "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    assert Canonical.get_hash("Welcome to Amazon S3.") == "44ce7dd67c959e0d3524ffac1771dfbba87d2b6b4b4e99e42034a8b803f8b072"
   end
 
   test "should generate a valid canonical request string 1" do

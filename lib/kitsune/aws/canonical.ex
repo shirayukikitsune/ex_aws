@@ -23,7 +23,7 @@ defmodule Kitsune.Aws.Canonical do
     |> Enum.join(";")
   end
 
-  def get_payload_hash(payload), do: :crypto.hash(:sha256, payload) |> Base.encode16 |> String.downcase
+  def get_hash(payload), do: :crypto.hash(:sha256, payload) |> Base.encode16 |> String.downcase
 
   def get_canonical_request(method, uri, headers, payload) do
     headers_with_host = (headers ++ [{"host", URI.parse(uri).host}])
@@ -34,6 +34,6 @@ defmodule Kitsune.Aws.Canonical do
     get_canonical_query_string(uri) <> "\n" <>
     get_canonical_headers(headers_with_host) <> "\n\n" <>
     get_signed_headers(headers_with_host) <> "\n" <>
-    get_payload_hash(payload)
+    get_hash(payload)
   end
 end
