@@ -8,6 +8,14 @@ defmodule Kitsune.Aws.RequestTest do
     :ok
   end
 
+  @doc """
+  Tests if a GET request is successful
+
+  For this test to pass, AWS environment variables must be set:
+    - AWS_SECRET_ACCESS_KEY
+    - AWS_ACCESS_KEY_ID
+    - AWS_DEFAULT_REGION
+  """
   test "Get SQS Url" do
     url = "https://sqs.sa-east-1.amazonaws.com/?Action=GetQueueUrl&QueueName=some-queue.fifo"
 
