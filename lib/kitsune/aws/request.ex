@@ -17,6 +17,15 @@ defmodule Kitsune.Aws.Request do
     R.get(RequestSupervisor, uri, headers)
   end
 
+  def await(request) do
+    request
+      |> Task.await
+      |> Enum.find(fn x -> elem(x, 0) == :data end)
+      |> elem(2)
+      |> Poison.decode!
+      |> Kitsune.Aws.Exception.verify_response
+  end
+
   defp get_credentials(opts) do
     region = opts["region"] || Config.get_default_region() || raise "Region not set for request"
     secret_access_key = opts["secret_key"] || Config.get_secret_key() || raise "AWS Secret Access Key not defined. Please set :kitsune_aws properly or the environment variable AWS_SECRET_ACCESS_KEY"
