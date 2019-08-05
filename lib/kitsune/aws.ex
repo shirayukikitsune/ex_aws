@@ -1,19 +1,11 @@
 defmodule Kitsune.Aws do
-  @moduledoc false
+  use Application
 
-  use Supervisor
-
-  def start_link(init_args) do
-    Supervisor.start_link(__MODULE__, :ok, init_args)
-  end
-
-  def init(:ok) do
+  def start(_type, _args) do
     children = [
-      { Task.Supervisor, name: Kitsune.RequestSupervisor }
+      Kitsune.AwsSupervisor
     ]
-
-    Supervisor.init(children, strategy: :one_for_one)
+    opts = [strategy: :one_for_one]
+    Supervisor.start_link(children, opts)
   end
-
 end
-

@@ -1,4 +1,4 @@
-defmodule ExAws.MixProject do
+defmodule KitsuneAws.MixProject do
   use Mix.Project
 
   def project do
@@ -14,6 +14,7 @@ defmodule ExAws.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
+      mod: {Kitsune.Aws, []},
       extra_applications: [:logger, :crypto]
     ]
   end
