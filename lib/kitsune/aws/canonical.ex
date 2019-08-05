@@ -1,5 +1,8 @@
 defmodule Kitsune.Aws.Canonical do
   def should_encode(ch), do: (ch >= ?A && ch <= ?Z) || (ch >= ?a && ch <= ?z) || (ch >= ?0 && ch <= ?9) || ch == ?_ || ch == ?- || ch == ?~ || ch == ?. || ch == ?/
+  @doc """
+  Encodes a string for URIs, using `should_encode/1` as encoder
+  """
   def uri_encode(string), do: URI.encode(string, &should_encode/1)
   def get_canonical_method(method), do: String.upcase method
 
