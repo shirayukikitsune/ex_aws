@@ -12,14 +12,33 @@ defmodule Kitsune.Request do
   Perform a GET request
   """
   def get(server, uri, headers \\ []) do
-    Task.Supervisor.async(server, Kitsune.Request, :run, [{:get, uri, headers}])
+    Task.Supervisor.async(server, Kitsune.Request, :run, [{:get, uri, nil, headers}])
   end
 
-  def run({:get, uri, headers}) do
+  @doc """
+  Perform a POST request
+  """
+  def post(server, uri, body, headers \\ []) do
+    Task.Supervisor.async(server, Kitsune.Request, :run, [{:post, uri, body, headers}])
+  end
+
+  def run({:get, uri, _body, headers}) do
     u = URI.parse(uri)
     {:ok, conn} = Mint.HTTP.connect(String.to_atom(u.scheme), u.host, u.port)
     {:ok, conn, _ref} = Mint.HTTP.request(conn, "GET", get_request_path(u.path, u.query), headers)
 
+    get_response conn
+  end
+
+  def run({:post, uri, body, headers}) do
+    u = URI.parse(uri)
+    {:ok, conn} = Mint.HTTP.connect(String.to_atom(u.scheme), u.host, u.port)
+    {:ok, conn, _ref} = Mint.HTTP.request(conn, "POST", get_request_path(u.path, u.query), headers, body)
+
+    get_response conn
+  end
+
+  defp get_response(conn) do
     receive do
       message ->
         {:ok, conn, responses} = Mint.HTTP.stream(conn, message)
