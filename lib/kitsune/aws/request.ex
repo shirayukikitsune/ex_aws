@@ -6,13 +6,27 @@ defmodule Kitsune.Aws.Request do
   alias Kitsune.Aws.Signature
 
   def get(uri, service, headers \\ [], opts \\ %{}) do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    headers = headers ++ [{"x-amz-date", DateTime.to_iso8601(now, :basic)}]
+
+    authorization_header = get_authorization_header uri, headers, service, now, opts
+
+    headers = headers ++ [{"authorization", authorization_header}]
+
+    R.get(RequestSupervisor, uri, headers)
+  end
+
+  defp get_credentials(opts) do
     region = opts["region"] || Config.get_default_region() || raise "Region not set for request"
     secret_access_key = opts["secret_key"] || Config.get_secret_key() || raise "AWS Secret Access Key not defined. Please set :kitsune_aws properly or the environment variable AWS_SECRET_ACCESS_KEY"
     access_key_id = opts["access_key"] || Config.get_access_key() || raise "AWS Access Key ID not defined. Please set :kitsune_aws properly or the environment variable AWS_ACCESS_KEY_ID"
 
-    now = DateTime.utc_now() |> DateTime.truncate(:second)
+    { access_key_id, secret_access_key, region }
+  end
 
-    headers = headers ++ [{"x-amz-date", DateTime.to_iso8601(now, :basic)}]
+  defp get_authorization_header(uri, headers, service, now, opts) do
+    { access_key_id, secret_access_key, region } = get_credentials opts
     headers_with_host = headers ++ [{"host", URI.parse(uri).host}]
 
     credential_scope = Signature.get_credential_scope(now, region, service)
@@ -23,10 +37,6 @@ defmodule Kitsune.Aws.Request do
     signing_key = Signature.get_signing_key(secret_access_key, region, service, now |> DateTime.to_date)
     signature = Signature.sign(signing_key, string_to_sign) |> Base.encode16 |> String.downcase
 
-    authorization_header = "AWS4-HMAC-SHA256 Credential=#{access_key_id}/#{credential_scope}, SignedHeaders=#{signed_headers}, Signature=#{signature}"
-
-    headers = headers ++ [{"authorization", authorization_header}]
-
-    R.get(RequestSupervisor, uri, headers)
+    "AWS4-HMAC-SHA256 Credential=#{access_key_id}/#{credential_scope}, SignedHeaders=#{signed_headers}, Signature=#{signature}"
   end
 end
