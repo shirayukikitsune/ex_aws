@@ -5,12 +5,14 @@ defmodule Kitsune.Aws.Request do
   alias Kitsune.Aws.Config
   alias Kitsune.Aws.Signature
 
-  def get(uri, service, headers \\ [], opts \\ %{}) do
+  def get(url, opts) do
     now = DateTime.utc_now() |> DateTime.truncate(:second)
+    params_str = Enum.to_list(opts[:query] || []) |> Enum.map_join("&", &map_param/1)
+    uri = if params_str != "", do: "#{url}?#{params_str}", else: url
 
-    headers = headers ++ [{"x-amz-date", DateTime.to_iso8601(now, :basic)}]
+    headers = (opts[:headers] || []) ++ [{"x-amz-date", DateTime.to_iso8601(now, :basic)}]
 
-    authorization_header = get_authorization_header uri, headers, service, now, opts
+    authorization_header = get_authorization_header uri, headers, opts[:service], now, opts[:opts]
 
     headers = headers ++ [{"authorization", authorization_header}]
 
@@ -27,10 +29,12 @@ defmodule Kitsune.Aws.Request do
       |> Kitsune.Aws.Exception.verify_response
   end
 
+  defp map_param(param), do: elem(param, 0) <> "=" <> elem(param, 1)
+
   defp get_credentials(opts) do
-    region = opts["region"] || Config.get_default_region() || raise "Region not set for request"
-    secret_access_key = opts["secret_key"] || Config.get_secret_key() || raise "AWS Secret Access Key not defined. Please set :kitsune_aws properly or the environment variable AWS_SECRET_ACCESS_KEY"
-    access_key_id = opts["access_key"] || Config.get_access_key() || raise "AWS Access Key ID not defined. Please set :kitsune_aws properly or the environment variable AWS_ACCESS_KEY_ID"
+    region = opts[:region] || Config.get_default_region() || raise "Region not set for request"
+    secret_access_key = opts[:secret_key] || Config.get_secret_key() || raise "AWS Secret Access Key not defined. Please set :kitsune_aws properly or the environment variable AWS_SECRET_ACCESS_KEY"
+    access_key_id = opts[:access_key] || Config.get_access_key() || raise "AWS Access Key ID not defined. Please set :kitsune_aws properly or the environment variable AWS_ACCESS_KEY_ID"
 
     { access_key_id, secret_access_key, region }
   end

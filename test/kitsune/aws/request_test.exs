@@ -11,7 +11,7 @@ defmodule Kitsune.Aws.RequestTest do
   test "Get SQS Url" do
     url = "http://localhost:9324/?Action=GetQueueUrl&QueueName=default"
 
-    data = R.get(url, "sqs", [], %{"region" => "sa-east-1", "access_key" => "test", "secret_key" => "test"})
+    data = R.get(url, service: "sqs", opts: [region: "sa-east-1", access_key: "test", secret_key: "test"])
            |> Task.await
            |> Enum.find(fn x -> elem(x, 0) == :data end)
            |> elem(2)
