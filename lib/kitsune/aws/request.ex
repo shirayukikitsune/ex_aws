@@ -18,11 +18,12 @@ defmodule Kitsune.Aws.Request do
   end
 
   def await(request) do
-    request
+    x = request
       |> Task.await
       |> Enum.find(fn x -> elem(x, 0) == :data end)
       |> elem(2)
-      |> Poison.decode!
+      |> Kitsune.Aws.ResponseParser.parse_document
+      |> Kitsune.Aws.ResponseParser.parse_node
       |> Kitsune.Aws.Exception.verify_response
   end
 

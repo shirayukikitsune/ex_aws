@@ -3,14 +3,13 @@ defmodule Kitsune.Aws.Sqs do
   alias Kitsune.Aws.Request
 
   @service_name "sqs"
-  @accept_json {"accept", "application/json"}
 
   def get_queue_url(opts) do
     region = opts["region"]
     queue_name = Canonical.uri_encode opts["name"]
     url = "https://sqs.#{region}.amazonaws.com/?Action=GetQueueUrl&QueueName=#{queue_name}"
 
-    data = Request.get(url, @service_name, [@accept_json], opts)
+    data = Request.get(url, @service_name, [], opts)
       |> Request.await
 
     data["GetQueueUrlResponse"]["GetQueueUrlResult"]["QueueUrl"]
@@ -27,7 +26,7 @@ defmodule Kitsune.Aws.Sqs do
     params_str = Enum.to_list(params) |> Enum.map_join("&", &map_param/1)
     url = if params_str != "", do: "#{queue_url}?#{params_str}", else: queue_url
 
-    data = Request.get(url, @service_name, [@accept_json], opts)
+    data = Request.get(url, @service_name, [], opts)
       |> Request.await
 
     data["ReceiveMessageResponse"]["ReceiveMessageResult"]
