@@ -18,7 +18,7 @@ defmodule Kitsune.Aws.Request do
   end
 
   def await(request) do
-    x = request
+    request
       |> Task.await
       |> Enum.find(fn x -> elem(x, 0) == :data end)
       |> elem(2)
