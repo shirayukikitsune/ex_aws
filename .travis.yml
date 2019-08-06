@@ -1,0 +1,19 @@
+language: elixir
+dist: bionic
+elixir: '1.9.1'
+otp_release: '22.0.7'
+git:
+  quiet: true
+services:
+  - docker
+
+before_install:
+  - docker pull roribio16/alpine-sqs
+  - docker run -p 9324:9324 -v `pwd`/tools/elasticmq/custom.conf:/opt/elasticmq.conf -d softwaremill/elasticmq
+
+script:
+  - mix local.hex --force
+  - mix deps.get --force
+  - mix clean
+  - mix compile
+  - mix test
