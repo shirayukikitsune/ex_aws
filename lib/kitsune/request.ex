@@ -25,9 +25,11 @@ defmodule Kitsune.Request do
   def run({:get, uri, _body, headers}) do
     u = URI.parse(uri)
     {:ok, conn} = Mint.HTTP.connect(String.to_atom(u.scheme), u.host, u.port)
-    {:ok, conn, _ref} = Mint.HTTP.request(conn, "GET", get_request_path(u.path, u.query), headers)
+    {:ok, conn, _ref} = Mint.HTTP.request(conn, "GET", get_request_path(u.path, u.query), headers, nil)
 
-    get_response conn
+    {conn, response} = get_response conn
+    Mint.HTTP.close(conn)
+    response
   end
 
   def run({:post, uri, body, headers}) do
@@ -35,18 +37,26 @@ defmodule Kitsune.Request do
     {:ok, conn} = Mint.HTTP.connect(String.to_atom(u.scheme), u.host, u.port)
     {:ok, conn, _ref} = Mint.HTTP.request(conn, "POST", get_request_path(u.path, u.query), headers, body)
 
-    get_response conn
+    {conn, response} = get_response conn
+    Mint.HTTP.close(conn)
+    response
   end
 
-  defp get_response(conn) do
+  defp get_response(conn, responses \\ []) do
     receive do
       message ->
-        {:ok, conn, responses} = Mint.HTTP.stream(conn, message)
-        {:ok, _r} = Mint.HTTP.close(conn)
-        responses
+        {:ok, conn, r} = Mint.HTTP.stream(conn, message)
+        r = Enum.concat(responses, r)
+        if is_done(r), do: {conn, r}, else: get_response(conn, r)
     end
   end
 
+  defp is_done(responses) do
+    Enum.find(responses, fn r -> elem(r, 0) == :done end) != nil
+  end
+
+  defp get_request_path(nil, nil), do: "/"
+  defp get_request_path(nil, params), do: "/?" <> params
   defp get_request_path(path, nil), do: path
   defp get_request_path(path, params), do: path <> "?" <> params
 end

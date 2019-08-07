@@ -22,7 +22,7 @@ defmodule Kitsune.Aws.Sqs do
       (if opts[:attributes], do: extract_send_attributes_params(opts[:attributes]), else: []),
       get_param("MessageDeduplicationId", opts[:dedup]),
       get_param("MessageGroupId", opts[:group]),
-      get_param("MessageBody", Canonical.uri_encode(body))
+      get_param("MessageBody", Canonical.param_encode(body))
     ]
 
     data = Request.get(queue_url, service: @service_name, opts: opts, query: params)
@@ -46,6 +46,15 @@ defmodule Kitsune.Aws.Sqs do
       |> Request.await
 
     data["ReceiveMessageResponse"]["ReceiveMessageResult"]
+  end
+
+  @spec delete_message(binary, nil | keyword | map) :: nil | keyword | map
+  def delete_message(receipt_handle, opts) do
+    queue_url = opts[:url]
+    params = [{"Action", "DeleteMessage"}, {"ReceiptHandle", Canonical.param_encode(receipt_handle)}]
+
+    Request.get(queue_url, service: @service_name, opts: opts, query: params)
+      |> Request.await
   end
 
   defp get_queue_url_param(nil, opts) do

@@ -25,3 +25,5 @@ ex_aws-*.tar
 .DS_Store
 .elixir_ls
 .vscode
+*.iml
+.idea

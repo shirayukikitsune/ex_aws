@@ -1,9 +1,11 @@
 defmodule Kitsune.Aws.Canonical do
-  def should_encode(ch), do: (ch >= ?A && ch <= ?Z) || (ch >= ?a && ch <= ?z) || (ch >= ?0 && ch <= ?9) || ch == ?_ || ch == ?- || ch == ?~ || ch == ?. || ch == ?/
+  def should_encode_param(ch), do: (ch >= ?A && ch <= ?Z) || (ch >= ?a && ch <= ?z) || (ch >= ?0 && ch <= ?9) || ch == ?_ || ch == ?- || ch == ?~ || ch == ?.
+  def should_encode(ch), do: should_encode_param(ch) || ch == ?/
   @doc """
   Encodes a string for URIs, using `should_encode/1` as encoder
   """
   def uri_encode(string), do: URI.encode(string, &should_encode/1)
+  def param_encode(string), do: URI.encode(string, &should_encode_param/1)
   def get_canonical_method(method), do: String.upcase method
 
   def get_canonical_uri(uri), do: uri_encode(URI.parse(uri).path || "/")
@@ -12,7 +14,7 @@ defmodule Kitsune.Aws.Canonical do
     (URI.parse(uri).query || "")
     |> URI.decode_query
     |> Enum.to_list
-    |> Enum.map_join("&", fn {k,v} -> uri_encode(to_string(k)) <> "=" <> uri_encode(to_string(v)) end)
+    |> Enum.map_join("&", fn {k,v} -> param_encode(to_string(k)) <> "=" <> param_encode(to_string(v)) end)
   end
 
   def get_canonical_headers(headers) do

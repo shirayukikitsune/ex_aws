@@ -19,9 +19,9 @@ defmodule Kitsune.Aws.Request do
     R.get(RequestSupervisor, uri, headers)
   end
 
-  def await(request) do
+  def await(request, timeout \\ 15000) do
     request
-      |> Task.await
+      |> Task.await(timeout)
       |> Enum.find(fn x -> elem(x, 0) == :data end)
       |> elem(2)
       |> Kitsune.Aws.ResponseParser.parse_document
