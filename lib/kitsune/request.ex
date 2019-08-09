@@ -22,6 +22,10 @@ defmodule Kitsune.Request do
     Task.Supervisor.async(server, Kitsune.Request, :run, [{:post, uri, body, headers}])
   end
 
+  def put(server, uri, body, headers \\ []) do
+    Task.Supervisor.async(server, Kitsune.Request, :run, [{:put, uri, body, headers}])
+  end
+
   def run({:get, uri, _body, headers}) do
     u = URI.parse(uri)
     {:ok, conn} = Mint.HTTP.connect(String.to_atom(u.scheme), u.host, u.port)
@@ -36,6 +40,16 @@ defmodule Kitsune.Request do
     u = URI.parse(uri)
     {:ok, conn} = Mint.HTTP.connect(String.to_atom(u.scheme), u.host, u.port)
     {:ok, conn, _ref} = Mint.HTTP.request(conn, "POST", get_request_path(u.path, u.query), headers, body)
+
+    {conn, response} = get_response conn
+    Mint.HTTP.close(conn)
+    response
+  end
+
+  def run({:put, uri, body, headers}) do
+    u = URI.parse(uri)
+    {:ok, conn} = Mint.HTTP.connect(String.to_atom(u.scheme), u.host, u.port)
+    {:ok, conn, _ref} = Mint.HTTP.request(conn, "PUT", get_request_path(u.path, u.query), headers, body)
 
     {conn, response} = get_response conn
     Mint.HTTP.close(conn)
