@@ -34,9 +34,9 @@ defmodule Kitsune.Aws.SqsTest do
       {:ok, queue_url: queue_url}
     end
 
-    test "should successfully send a message", ctx do
+    test "should successfully send a message with attributes", ctx do
       queue_url = ctx[:queue_url]
-      response = Sqs.send_message "test message", url: queue_url
+      response = Sqs.send_message "test message", url: queue_url, attributes: [[name: "test attribute", value: "test value"]]
 
       assert response["MessageId"] != nil
     end
@@ -48,9 +48,23 @@ defmodule Kitsune.Aws.SqsTest do
       {:ok, queue_url: queue_url}
     end
 
-    test "should successfully receive a message", ctx do
+    test "should successfully receive a message with attributes", ctx do
       queue_url = ctx[:queue_url]
-      response = Sqs.receive_message url: queue_url
+      response = Sqs.receive_message url: queue_url, attributes: ["test attribute"]
+
+      assert response != nil
+    end
+  end
+
+  describe "delete_message/2" do
+    setup do
+      queue_url = Sqs.get_queue_url name: "default", url: "http://localhost:9324/"
+      {:ok, queue_url: queue_url}
+    end
+
+    test "should delete a message from the queue", ctx do
+      queue_url = ctx[:queue_url]
+      response = Sqs.delete_message "00000000-0000-0000-0000-000000000000", url: queue_url
 
       assert response != nil
     end

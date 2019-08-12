@@ -22,6 +22,9 @@ defmodule Kitsune.Request do
     Task.Supervisor.async(server, Kitsune.Request, :run, [{:post, uri, body, headers}])
   end
 
+  @doc """
+  Perform a PUT request
+  """
   def put(server, uri, body, headers \\ []) do
     Task.Supervisor.async(server, Kitsune.Request, :run, [{:put, uri, body, headers}])
   end

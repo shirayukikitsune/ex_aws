@@ -69,16 +69,16 @@ defmodule Kitsune.Aws.Sqs do
 
   defp extract_attributes_params(attributes) do
     Enum.with_index(attributes)
-      |> Enum.map(fn {attr, i} -> {"AttributeName.#{i}", attr} end)
+      |> Enum.map(fn {attr, i} -> {"AttributeName.#{i}", Canonical.param_encode(attr)} end)
   end
 
   defp extract_send_attributes_params(attributes) do
     Enum.with_index(attributes)
       |> Enum.flat_map(fn {attr, i} ->
           [
-            {"MessageAttribute.#{i}.Name", attr[:name]},
+            {"MessageAttribute.#{i}.Name", Canonical.param_encode(attr[:name])},
             {"MessageAttribute.#{i}.Value.DataType", "String"},
-            {"MessageAttribute.#{i}.Value.StringValue", to_string(attr[:value])}
+            {"MessageAttribute.#{i}.Value.StringValue", Canonical.param_encode(to_string(attr[:value]))}
           ]
         end)
   end
