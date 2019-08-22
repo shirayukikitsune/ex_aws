@@ -20,13 +20,25 @@ defmodule Kitsune.Aws.Request do
   end
 
   def await(request, timeout \\ 15000) do
-    request
-      |> Task.await(timeout)
-      |> Enum.find(fn x -> elem(x, 0) == :data end)
-      |> elem(2)
-      |> Kitsune.Aws.ResponseParser.parse_document
-      |> Kitsune.Aws.ResponseParser.parse_node
-      |> Kitsune.Aws.Exception.verify_response
+    try do
+      request |> Task.await(timeout)
+    rescue
+      e -> {:error, e}
+    end
+    |> handle_task_result
+  end
+
+  defp handle_task_result({:error, e}) do
+    raise Kitsune.Aws.SdkException, code: "RequestError", type: "request", description: "The request failed to complete"
+  end
+  defp handle_task_result(result) do
+    result
+    |> Enum.filter(fn x -> elem(x, 0) == :data end)
+    |> Enum.map(&elem(&1, 2))
+    |> Enum.join()
+    |> Kitsune.Aws.ResponseParser.parse_document
+    |> Kitsune.Aws.ResponseParser.parse_node
+    |> Kitsune.Aws.Exception.verify_response
   end
 
   defp map_param(param), do: elem(param, 0) <> "=" <> elem(param, 1)

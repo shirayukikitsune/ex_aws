@@ -12,21 +12,21 @@ defmodule Kitsune.Request do
   Perform a GET request
   """
   def get(server, uri, headers \\ []) do
-    Task.Supervisor.async(server, Kitsune.Request, :run, [{:get, uri, nil, headers}])
+    Task.Supervisor.async_nolink(server, Kitsune.Request, :run, [{:get, uri, nil, headers}])
   end
 
   @doc """
   Perform a POST request
   """
   def post(server, uri, body, headers \\ []) do
-    Task.Supervisor.async(server, Kitsune.Request, :run, [{:post, uri, body, headers}])
+    Task.Supervisor.async_nolink(server, Kitsune.Request, :run, [{:post, uri, body, headers}])
   end
 
   @doc """
   Perform a PUT request
   """
   def put(server, uri, body, headers \\ []) do
-    Task.Supervisor.async(server, Kitsune.Request, :run, [{:put, uri, body, headers}])
+    Task.Supervisor.async_nolink(server, Kitsune.Request, :run, [{:put, uri, body, headers}])
   end
 
   def run({:get, uri, _body, headers}) do
