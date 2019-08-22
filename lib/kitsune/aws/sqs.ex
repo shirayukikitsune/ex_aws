@@ -4,17 +4,20 @@ defmodule Kitsune.Aws.Sqs do
 
   @service_name "sqs"
 
-  def get_queue_url(opts) do
+  def get_queue_url_task(opts) do
     url = get_queue_url_param opts[:url], opts
     queue_name = Canonical.uri_encode opts[:name]
 
-    data = Request.get(url, service: @service_name, opts: opts, query: [{"Action", "GetQueueUrl"}, {"QueueName", queue_name}])
+    Request.get(url, service: @service_name, opts: opts, query: [{"Action", "GetQueueUrl"}, {"QueueName", queue_name}])
+  end
+  def get_queue_url(opts) do
+    data = get_queue_url_task(opts)
       |> Request.await
 
     data["GetQueueUrlResponse"]["GetQueueUrlResult"]["QueueUrl"]
   end
 
-  def send_message(body, opts) do
+  def send_message_task(body, opts) do
     queue_url = opts[:url]
     params = Enum.concat [
       [{"Action","SendMessage"}],
@@ -25,13 +28,16 @@ defmodule Kitsune.Aws.Sqs do
       get_param("MessageBody", Canonical.param_encode(body))
     ]
 
-    data = Request.get(queue_url, service: @service_name, opts: opts, query: params)
+    Request.get(queue_url, service: @service_name, opts: opts, query: params)
+  end
+  def send_message(body, opts) do
+    data = send_message_task(body, opts)
            |> Request.await
 
     data["SendMessageResponse"]["SendMessageResult"]
   end
 
-  def receive_message(opts) do
+  def receive_message_task(opts) do
     queue_url = opts[:url]
     params = Enum.concat [
       [{"Action","ReceiveMessage"}],
@@ -42,19 +48,24 @@ defmodule Kitsune.Aws.Sqs do
       get_param("WaitTimeSeconds", opts[:wait_time])
     ]
 
-    data = Request.get(queue_url, service: @service_name, opts: opts, query: params)
+    Request.get(queue_url, service: @service_name, opts: opts, query: params)
+  end
+  def receive_message(opts) do
+    data = receive_message_task(opts)
       |> Request.await
 
     data["ReceiveMessageResponse"]["ReceiveMessageResult"]
   end
 
-  @spec delete_message(binary, nil | keyword | map) :: nil | keyword | map
-  def delete_message(receipt_handle, opts) do
+  def delete_message_task(receipt_handle, opts) do
     queue_url = opts[:url]
     params = [{"Action", "DeleteMessage"}, {"ReceiptHandle", Canonical.param_encode(receipt_handle)}]
 
     Request.get(queue_url, service: @service_name, opts: opts, query: params)
-      |> Request.await
+  end
+  def delete_message(receipt_handle, opts) do
+    delete_message_task(receipt_handle, opts)
+    |> Request.await
   end
 
   defp get_queue_url_param(nil, opts) do
