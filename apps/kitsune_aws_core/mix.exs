@@ -26,7 +26,8 @@ defmodule Kitsune.Aws.Core.MixProject do
   defp deps do
     [
       {:mojito, "~> 0.5.0"},
-      {:poison, "~> 4.0.1"}
+      {:poison, "~> 4.0.1"},
+      {:ex_doc, "~> 0.21", only: :dev, runtime: false}
     ]
   end
 end

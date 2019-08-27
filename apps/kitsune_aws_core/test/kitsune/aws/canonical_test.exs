@@ -5,14 +5,14 @@ defmodule Kitsune.Aws.CanonicalTest do
 
   test "should generate a canonical method string" do
     assert Canonical.get_canonical_method("GET") == "GET"
-    assert Canonical.get_canonical_method("post") == "POST"
+    assert Canonical.get_canonical_method(" post ") == "POST"
     assert Canonical.get_canonical_method("Put") == "PUT"
   end
 
-  test "should generate a canonical URI" do
-    assert Canonical.get_canonical_uri("http://google.com") == "/"
-    assert Canonical.get_canonical_uri("http://google.com/") == "/"
-    assert Canonical.get_canonical_uri("http://s3.amazonaws.com/examplebucket/myphoto.jpg") == "/examplebucket/myphoto.jpg"
+  test "should generate a canonical path" do
+    assert Canonical.get_canonical_path("http://google.com") == "/"
+    assert Canonical.get_canonical_path("http://google.com/") == "/"
+    assert Canonical.get_canonical_path("http://s3.amazonaws.com/examplebucket/myphoto.jpg") == "/examplebucket/myphoto.jpg"
   end
 
   test "should generate a canonical query string" do
@@ -22,7 +22,7 @@ defmodule Kitsune.Aws.CanonicalTest do
   end
 
   test "should generate a canonical header string" do
-    assert Canonical.get_canonical_headers([{"a", "123"}, {"Accept", "application/json"}, {"Content-Type", "application/json"}]) == "a:123\naccept:application/json\ncontent-type:application/json"
+    assert Canonical.get_canonical_headers([{"a", "123"}, {"Accept", "application/json"}, {"Content-Type", "application/json"}]) == "a:123\naccept:application/json\ncontent-type:application/json\n"
   end
 
   test "should generate a signed headers string" do

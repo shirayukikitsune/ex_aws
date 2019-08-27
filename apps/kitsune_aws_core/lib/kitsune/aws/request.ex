@@ -45,7 +45,7 @@ defmodule Kitsune.Aws.Request do
     |> Kitsune.Aws.Exception.verify_response
   end
 
-  defp map_param(param), do: elem(param, 0) <> "=" <> elem(param, 1)
+  defp map_param({key, value}), do: "#{to_string(key)}=#{Canonical.param_encode(to_string(value))}"
 
   defp get_credentials(opts) do
     region = opts[:region] || Config.get_default_region() || raise "Region not set for request"
