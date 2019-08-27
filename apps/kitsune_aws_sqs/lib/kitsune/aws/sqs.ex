@@ -4,20 +4,17 @@ defmodule Kitsune.Aws.Sqs do
 
   @service_name "sqs"
 
-  def get_queue_url_task(opts) do
+  def get_queue_url(opts) do
     url = get_queue_url_param opts[:url], opts
     queue_name = Canonical.uri_encode opts[:name]
+    {_, new_opts} = Access.pop(opts, :name)
+    {_, new_opts} = Access.pop(new_opts, :raw)
 
-    Request.get(url, service: @service_name, opts: opts, query: [{"Action", "GetQueueUrl"}, {"QueueName", queue_name}])
-  end
-  def get_queue_url(opts) do
-    data = get_queue_url_task(opts)
-      |> Request.await
-
-    data["GetQueueUrlResponse"]["GetQueueUrlResult"]["QueueUrl"]
+    data = Request.request(url: url, aws: [service: @service_name] ++ new_opts, query: [{"Action", "GetQueueUrl"}, {"QueueName", queue_name}])
+    if opts[:raw] == true, do: data, else: data["GetQueueUrlResponse"]["GetQueueUrlResult"]["QueueUrl"]
   end
 
-  def send_message_task(body, opts) do
+  def send_message(body, opts) do
     queue_url = opts[:url]
     params = Enum.concat [
       [{"Action","SendMessage"}],
@@ -28,16 +25,11 @@ defmodule Kitsune.Aws.Sqs do
       get_param("MessageBody", Canonical.param_encode(body))
     ]
 
-    Request.get(queue_url, service: @service_name, opts: opts, query: params)
-  end
-  def send_message(body, opts) do
-    data = send_message_task(body, opts)
-           |> Request.await
-
-    data["SendMessageResponse"]["SendMessageResult"]
+    data = Request.request(url: queue_url, aws: [service: @service_name] ++ opts, query: params)
+    if opts[:raw] == true, do: data, else: data["SendMessageResponse"]["SendMessageResult"]
   end
 
-  def receive_message_task(opts) do
+  def receive_message(opts) do
     queue_url = opts[:url]
     params = Enum.concat [
       [{"Action","ReceiveMessage"}],
@@ -48,24 +40,16 @@ defmodule Kitsune.Aws.Sqs do
       get_param("WaitTimeSeconds", opts[:wait_time])
     ]
 
-    Request.get(queue_url, service: @service_name, opts: opts, query: params)
-  end
-  def receive_message(opts) do
-    data = receive_message_task(opts)
-      |> Request.await
-
-    data["ReceiveMessageResponse"]["ReceiveMessageResult"]
+    data = Request.request(url: queue_url, aws: [service: @service_name] ++ opts, query: params)
+    if opts[:raw] == true, do: data, else: data["ReceiveMessageResponse"]["ReceiveMessageResult"]
   end
 
-  def delete_message_task(receipt_handle, opts) do
+  def delete_message(receipt_handle, opts) do
     queue_url = opts[:url]
     params = [{"Action", "DeleteMessage"}, {"ReceiptHandle", Canonical.param_encode(receipt_handle)}]
 
-    Request.get(queue_url, service: @service_name, opts: opts, query: params)
-  end
-  def delete_message(receipt_handle, opts) do
-    delete_message_task(receipt_handle, opts)
-    |> Request.await
+    data = Request.request(url: queue_url, aws: [service: @service_name] ++ opts, query: params)
+    if opts[:raw] == true, do: data, else: data["DeleteMessageResponse"]
   end
 
   defp get_queue_url_param(nil, opts) do

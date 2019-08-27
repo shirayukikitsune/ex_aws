@@ -1,4 +1,4 @@
-defmodule KitsuneAws.Core.MixProject do
+defmodule Kitsune.Aws.Core.MixProject do
   use Mix.Project
 
   def project do
@@ -18,7 +18,6 @@ defmodule KitsuneAws.Core.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      mod: {Kitsune.Aws, []},
       extra_applications: [:logger, :crypto]
     ]
   end
@@ -26,8 +25,7 @@ defmodule KitsuneAws.Core.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:castore, "~> 0.1.0"},
-      {:mint, "~> 0.2.0"},
+      {:mojito, "~> 0.5.0"},
       {:poison, "~> 4.0.1"}
     ]
   end
