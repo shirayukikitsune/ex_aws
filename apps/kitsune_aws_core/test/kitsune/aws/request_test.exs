@@ -11,12 +11,7 @@ defmodule Kitsune.Aws.RequestTest do
   test "Get SQS Url" do
     url = "http://localhost:9324/?Action=GetQueueUrl&QueueName=default"
 
-    data = R.get(url, service: "sqs", opts: [region: "sa-east-1", access_key: "test", secret_key: "test"])
-           |> Task.await
-           |> Enum.find(fn x -> elem(x, 0) == :data end)
-           |> elem(2)
-           |> Kitsune.Aws.ResponseParser.parse_document
-           |> Kitsune.Aws.ResponseParser.parse_node
+    data = R.request(url: url, aws: [region: "sa-east-1", access_key: "test", secret_key: "test", service: "sqs"])
 
     x = data["GetQueueUrlResponse"]["GetQueueUrlResult"]["QueueUrl"]
     assert x != nil

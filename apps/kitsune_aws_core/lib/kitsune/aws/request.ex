@@ -1,42 +1,46 @@
 defmodule Kitsune.Aws.Request do
-  alias Kitsune.Request, as: R
-  alias Kitsune.RequestSupervisor
+  @moduledoc """
+  This module is responsible for handling the common logic for HTTP requests to AWS
+  """
+
+  require Mojito
+
   alias Kitsune.Aws.Canonical
   alias Kitsune.Aws.Config
   alias Kitsune.Aws.Signature
 
-  def get(url, opts) do
+  def request(request) do
     now = DateTime.utc_now() |> DateTime.truncate(:second)
-    params_str = Enum.to_list(opts[:query] || []) |> Enum.map_join("&", &map_param/1)
-    uri = if params_str != "", do: "#{url}?#{params_str}", else: url
 
-    headers = (opts[:headers] || []) ++ [{"x-amz-date", DateTime.to_iso8601(now, :basic)}]
+    uri = parse_url_with_query_parameters(request[:url], request[:query])
 
-    authorization_header = get_authorization_header uri, headers, opts[:service], now, opts[:opts]
+    headers = (request[:headers] || []) ++ [{"x-amz-date", DateTime.to_iso8601(now, :basic)}]
+
+    authorization_header = get_authorization_header uri, headers, now, request[:aws]
 
     headers = headers ++ [{"authorization", authorization_header}]
 
-    R.get(RequestSupervisor, uri, headers)
-  end
-
-  def await(request, timeout \\ 15000) do
-    try do
-      request |> Task.await(timeout)
-    rescue
-      e -> {:error, e}
-    end
+    Mojito.request(method: request[:method] || :get,
+                   headers: headers,
+                   body: request[:body] || "",
+                   opts: request[:opts] || [],
+                   url: uri)
     |> handle_task_result
   end
 
+  defp parse_url_with_query_parameters(url, params) do
+    params_str = Enum.to_list(params || [])
+                 |> Enum.map_join("&", &map_param/1)
+
+    if params_str != "", do: "#{url}?#{params_str}", else: url
+  end
+
   defp handle_task_result({:error, e}) do
+    IO.inspect(e)
     raise Kitsune.Aws.SdkException, code: "RequestError", type: "request", description: "The request failed to complete"
   end
-  defp handle_task_result(result) do
-    result
-    |> Enum.filter(fn x -> elem(x, 0) == :data end)
-    |> Enum.map(&elem(&1, 2))
-    |> Enum.join()
-    |> Kitsune.Aws.ResponseParser.parse_document
+  defp handle_task_result({:ok, response}) do
+    Kitsune.Aws.ResponseParser.parse_document(response.body)
     |> Kitsune.Aws.ResponseParser.parse_node
     |> Kitsune.Aws.Exception.verify_response
   end
@@ -51,7 +55,8 @@ defmodule Kitsune.Aws.Request do
     { access_key_id, secret_access_key, region }
   end
 
-  defp get_authorization_header(uri, headers, service, now, opts) do
+  defp get_authorization_header(uri, headers, now, opts) do
+    service = opts[:service]
     { access_key_id, secret_access_key, region } = get_credentials opts
     headers_with_host = headers ++ [{"host", URI.parse(uri).host}]
 
