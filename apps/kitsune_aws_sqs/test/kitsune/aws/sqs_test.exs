@@ -11,6 +11,7 @@ defmodule Kitsune.Aws.SqsTest do
     Application.put_env :kitsune_aws, :secret_key, @secret_key
     Application.put_env :kitsune_aws, :access_key, @access_key
     Application.put_env :kitsune_aws, :default_region, @region
+    Kitsune.Aws.Config.load()
     {:ok, %{}}
   end
 
