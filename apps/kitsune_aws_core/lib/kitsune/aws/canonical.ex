@@ -23,6 +23,7 @@ defmodule Kitsune.Aws.Canonical do
 
   For AWS parameters, this is true whenever a character matches the group [A-Za-z0-9_~.-]
   """
+  @spec encode_param?(char()) :: boolean()
   def encode_param?(ch), do:
     (ch >= ?A && ch <= ?Z) || (ch >= ?a && ch <= ?z) ||
     (ch >= ?0 && ch <= ?9) ||
@@ -37,16 +38,19 @@ defmodule Kitsune.Aws.Canonical do
   For AWS URIs, this is true whenever a character should not be param encoded (see `encode_param?/2`)
   or when it is the forward slash character (`/`)
   """
+  @spec encode_uri?(char()) :: boolean()
   def encode_uri?(ch), do: encode_param?(ch) || ch == ?/
 
   @doc """
   Encodes a string for URIs, using `encode_uri?/1` as encoder
   """
+  @spec uri_encode(String.t()) :: String.t()
   def uri_encode(string), do: URI.encode(string, &encode_uri?/1)
 
   @doc """
   Encodes a string for query parameters, using `encode_param?/1` as encoder
   """
+  @spec param_encode(String.t()) :: String.t()
   def param_encode(string), do: URI.encode(string, &encode_param?/1)
 
   @doc """
@@ -60,6 +64,7 @@ defmodule Kitsune.Aws.Canonical do
       "POST"
 
   """
+  @spec get_canonical_method(String.t()) :: String.t()
   def get_canonical_method(method), do: String.trim String.upcase method
 
   @doc """
@@ -79,6 +84,7 @@ defmodule Kitsune.Aws.Canonical do
       "/foo/bar"
 
   """
+  @spec get_canonical_path(String.t()) :: String.t()
   def get_canonical_path(uri), do: uri_encode(URI.parse(uri).path || "/")
 
   @doc """
@@ -98,6 +104,7 @@ defmodule Kitsune.Aws.Canonical do
       "baz=123&foo%21=bar%40"
 
   """
+  @spec get_canonical_query_string(String.t()) :: String.t()
   def get_canonical_query_string(uri) do
     (URI.parse(uri).query || "")
     |> URI.decode_query
@@ -122,13 +129,15 @@ defmodule Kitsune.Aws.Canonical do
       "accept:application/json\ncontent-type:application/json\n"
 
   """
+  @spec get_canonical_headers([{String.t(),String.t()}]) :: String.t()
   def get_canonical_headers(headers) do
-    Enum.sort_by(headers, fn {k, _v} -> String.downcase(k) end)
+    Stream.map(headers, fn {k, v} -> {String.downcase(k), v} end)
+    |> Enum.sort_by(fn {k, _v} -> k end)
     |> get_canonical_headers_unsorted()
   end
 
   defp get_canonical_headers_unsorted(headers) do
-    Enum.map_join(headers, "\n", fn {k, v} -> String.downcase(to_string(k)) <> ":" <> String.trim(to_string(v)) end) <> "\n"
+    Enum.map_join(headers, "\n", fn {k, v} -> k <> ":" <> String.trim(to_string(v)) end) <> "\n"
   end
 
   @doc """
@@ -143,13 +152,15 @@ defmodule Kitsune.Aws.Canonical do
       iex> Kitsune.Aws.Canonical.get_signed_headers([{"Content-type", "application/json"}, {"Accept", " application/json"}])
       "accept;content-type"
   """
+  @spec get_signed_headers([{String.t(),String.t()}]) :: String.t()
   def get_signed_headers(headers) do
-    Enum.sort_by(headers, fn {k, _v} -> String.downcase(k) end)
+    Stream.map(headers, fn {k, v} -> {String.downcase(k), v} end)
+    |> Enum.sort_by(fn {k, _v} -> k end)
     |> get_signed_headers_unsorted()
   end
 
   defp get_signed_headers_unsorted(headers) do
-    Enum.map_join(headers, ";", fn {k, _v} -> String.downcase(k) end)
+    Enum.map_join(headers, ";", fn {k, _v} -> k end)
   end
 
   @doc """
@@ -157,6 +168,7 @@ defmodule Kitsune.Aws.Canonical do
 
   This returns the SHA2-256 hash of the payload, in a lower case hex string
   """
+  @spec get_hash(String.t()) :: String.t()
   def get_hash(payload), do: :crypto.hash(:sha256, payload) |> Base.encode16 |> String.downcase
 
   @doc ~S"""
@@ -171,10 +183,12 @@ defmodule Kitsune.Aws.Canonical do
       "GET\n/test.txt\n\nhost:examplebucket.s3.amazonaws.com\n\nhost\ne3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
   """
+  @spec get_canonical_request(String.t(),String.t(),[{String.t(),String.t()}],String.t()) :: String.t()
   def get_canonical_request(method, uri, headers, payload) do
     headers_with_host = (headers ++ [{"host", URI.parse(uri).host}])
-      |> Enum.sort_by(fn {k, _v} -> String.downcase(k) end)
-      |> Enum.dedup_by(fn {k, _v} -> String.downcase(k) end)
+      |> Stream.map(fn {k, v} -> {String.downcase(k), v} end)
+      |> Enum.sort_by(fn {k, _v} -> k end)
+      |> Enum.dedup_by(fn {k, _v} -> k end)
     get_canonical_method(method) <> "\n" <>
     get_canonical_path(uri) <> "\n" <>
     get_canonical_query_string(uri) <> "\n" <>

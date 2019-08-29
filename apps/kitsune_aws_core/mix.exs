@@ -11,7 +11,8 @@ defmodule Kitsune.Aws.Core.MixProject do
       lockfile: "../../mix.lock",
       elixir: "~> 1.9",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      docs: docs()
     ]
   end
 
@@ -28,6 +29,12 @@ defmodule Kitsune.Aws.Core.MixProject do
       {:mojito, "~> 0.5.0"},
       {:poison, "~> 4.0.1"},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false}
+    ]
+  end
+
+  defp docs do
+    [
+      extras: Path.wildcard("lib/docs/*.md")
     ]
   end
 end
