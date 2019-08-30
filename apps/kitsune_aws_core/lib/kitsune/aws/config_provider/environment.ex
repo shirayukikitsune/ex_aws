@@ -10,6 +10,12 @@ defmodule Kitsune.Aws.ConfigProvider.Environment do
 
   """
 
+  @behaviour Kitsune.Aws.ConfigProvider
+
+  @doc """
+  Populates the `Kitsune.Aws.Config` struct with values from environment variables
+  """
+  @spec load() :: Kitsune.Aws.Config.t()
   def load() do
     access_key = get_access_key()
     secret_key = get_secret_key()

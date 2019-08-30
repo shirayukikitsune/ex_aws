@@ -15,9 +15,12 @@ defmodule Kitsune.Aws.ConfigProvider.ApplicationConfig do
 
   """
 
+  @behaviour Kitsune.Aws.ConfigProvider
+
   @doc """
   Populates the `Kitsune.Aws.Config` struct with values from application configuration
   """
+  @spec load() :: Kitsune.Aws.Config.t()
   def load() do
     access_key = get_access_key()
     secret_key = get_secret_key()
